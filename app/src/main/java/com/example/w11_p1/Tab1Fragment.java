@@ -1,19 +1,18 @@
-/**
- * This the flashcard screen where a user is given 10 questions
- * The user type in the answer and the app keeps track of the user's score
- * The user can restart the game by clicking on the restart button
- *
- * @author Abdulshaheed Alqunber
- * @since 2019-09-23
- */
-
 package com.example.w11_p1;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.Intent;
+import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
+
+import java.util.Random;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -22,9 +21,7 @@ import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.Random;
-
-public class flashcard extends AppCompatActivity {
+public class Tab1Fragment extends Fragment {
 
     private int question_num = 0;
     private int correct = 0;
@@ -35,22 +32,42 @@ public class flashcard extends AppCompatActivity {
     TextView question;
     EditText answer;
     Button submit_btn;
+    Button restart_btn;
     private FirebaseAuth mAuth;
     String displayName;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_flashcard);
 
-        num1 = (TextView) findViewById(R.id.num1);
-        num2 = (TextView) findViewById(R.id.num2);
-        question = (TextView) findViewById(R.id.question);
-        answer = (EditText) findViewById(R.id.answer);
-        submit_btn = (Button) findViewById(R.id.submit_btn);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_tab1, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        num1 = (TextView) view.findViewById(R.id.num1);
+        num2 = (TextView) view.findViewById(R.id.num2);
+        question = (TextView) view.findViewById(R.id.question);
+        answer = (EditText) view.findViewById(R.id.answer);
+        submit_btn = (Button) view.findViewById(R.id.submit_btn);
+        restart_btn = (Button) view.findViewById(R.id.restart_btn);
         mAuth = FirebaseAuth.getInstance();
         final FirebaseUser user = mAuth.getCurrentUser();
         displayName = user.getDisplayName();
+
+        submit_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                submit(v);
+            }
+        });
+
+        restart_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                restart(v);
+            }
+        });
 
         if (savedInstanceState != null) {
             num1.setText(savedInstanceState.getString("num1", ""));
@@ -62,14 +79,16 @@ public class flashcard extends AppCompatActivity {
 
         } else {
 
-            Toast toast = Toast.makeText(this, String.format("Welcome %s!", displayName), Toast.LENGTH_LONG);
+            Toast toast = Toast.makeText(getContext(), String.format("Welcome %s!", displayName), Toast.LENGTH_LONG);
             toast.show();
             get_questions();
         }
+
     }
 
+
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState(Bundle outState) {
         outState.putString("num1", num1.getText().toString());
         outState.putString("num2", num2.getText().toString());
         outState.putInt("question_num", question_num);
@@ -115,7 +134,7 @@ public class flashcard extends AppCompatActivity {
                 if (question_num == 10) {
                     setQuestionText();
                     submit_btn.setEnabled(false);
-                    Toast toast = Toast.makeText(this, String.format("Congrats! You answered %s out of %s correct!", correct + "", question_num + ""), Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(getContext(), String.format("Congrats! You answered %s out of %s correct!", correct + "", question_num + ""), Toast.LENGTH_LONG);
                     toast.show();
                 } else {
                     get_questions();
@@ -123,14 +142,14 @@ public class flashcard extends AppCompatActivity {
             }
             // catch any input other than numbers
             catch (NumberFormatException e) {
-                Toast toast = Toast.makeText(this, "Please input a number!", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(getContext(), "Please input a number!", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
         }
         // if user try to submit empty answer
         else {
-            Toast toast = Toast.makeText(this, "Please input an answer!", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(getContext(), "Please input an answer!", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
@@ -148,3 +167,5 @@ public class flashcard extends AppCompatActivity {
     }
 
 }
+
+
