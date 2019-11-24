@@ -20,6 +20,8 @@ import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class Tab1Fragment extends Fragment {
 
@@ -36,15 +38,15 @@ public class Tab1Fragment extends Fragment {
     private FirebaseAuth mAuth;
     String displayName;
 
+    FirebaseDatabase db;
+    DatabaseReference userScore;
+    private DatabaseReference mDatabase;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_tab1, container, false);
-    }
+        View view = inflater.inflate(R.layout.fragment_tab1, container, false);
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
         num1 = (TextView) view.findViewById(R.id.num1);
         num2 = (TextView) view.findViewById(R.id.num2);
         question = (TextView) view.findViewById(R.id.question);
@@ -54,6 +56,8 @@ public class Tab1Fragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         final FirebaseUser user = mAuth.getCurrentUser();
         displayName = user.getDisplayName();
+        mDatabase = FirebaseDatabase.getInstance().getReference("flash_card");
+        userScore = mDatabase.child(user.getUid());
 
         submit_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,6 +87,13 @@ public class Tab1Fragment extends Fragment {
             toast.show();
             get_questions();
         }
+
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
     }
 
@@ -129,6 +140,7 @@ public class Tab1Fragment extends Fragment {
                 int denominator = Integer.parseInt(denominator_string.substring(2, denominator_string.length()));
                 if (answer_int == numerator / denominator) {
                     correct += 1;
+                    userScore.setValue(correct);
                 }
 
                 if (question_num == 10) {
