@@ -1,14 +1,14 @@
 package com.example.w11_p1;
 
-public class Ranking {
+public class User {
     private String username;
-    private int score;
+    private Long score;
 
 
-    public Ranking() {
+    public User() {
     }
 
-    public Ranking(String username, int score) {
+    public User(String username, Long score) {
         this.username = username;
         this.score = score;
     }
@@ -21,11 +21,11 @@ public class Ranking {
         this.username = username;
     }
 
-    public int getScore() {
+    public Long getScore() {
         return score;
     }
 
-    public void setScore(int score) {
+    public void setScore(Long score) {
         this.score = score;
     }
 }
