@@ -1,7 +1,5 @@
 package com.example.w11_p1;
 
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 
 import java.util.Random;
@@ -10,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +17,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.firebase.FirebaseError;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -30,7 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 public class Tab1Fragment extends Fragment {
 
     private int question_num = 0;
-    private long correct = 0;
+    private long correct;
 
     Random random = new Random();
     TextView num1;
@@ -78,25 +76,25 @@ public class Tab1Fragment extends Fragment {
             }
         });
 
+        userScore.child("score").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                correct = (Long) snapshot.getValue();
+                Log.i("corr", snapshot.getValue().toString());
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError){
+            }
+        });
+
         if (savedInstanceState != null) {
             num1.setText(savedInstanceState.getString("num1"));
             num2.setText(savedInstanceState.getString("num2"));
             question_num = savedInstanceState.getInt("question_num");
             long correct1 = savedInstanceState.getLong("correct");
 
-            userScore.child("score").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                   correct = (Long) snapshot.getValue();
-                }
-                @Override
-                public void onCancelled(DatabaseError databaseError){
-                }
-            });
-
             correct = (correct1 > correct) ? correct1 : correct;
-
-
+            
             submit_btn.setEnabled(savedInstanceState.getBoolean("submit", true));
             setQuestionText();
 
@@ -124,6 +122,12 @@ public class Tab1Fragment extends Fragment {
         outState.putLong("correct", correct);
         outState.putBoolean("submitEnabled", submit_btn.isEnabled());
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+
     }
 
     // method to set the question number and number of correct questions
@@ -187,7 +191,7 @@ public class Tab1Fragment extends Fragment {
     // method to restart the game
     public void restart(View view) {
         question_num = 0;
-        correct = 0;
+//        correct = 0;
 
         if (!submit_btn.isEnabled()) {
             submit_btn.setEnabled(true);

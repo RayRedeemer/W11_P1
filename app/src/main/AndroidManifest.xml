@@ -24,9 +24,6 @@
             android:theme="@style/AppTheme.NoActionBar"
         android:screenOrientation="portrait"></activity
             >
-        <activity
-            android:name=".flashcard"
-            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
