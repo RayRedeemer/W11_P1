@@ -21,7 +21,6 @@ public class MainActivity extends AppCompatActivity {
 
     Tab1Fragment tab1;
     Tab2Fragment tab2;
-    Tab3Fragment tab3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,10 +31,8 @@ public class MainActivity extends AppCompatActivity {
         adapter = new TabAdapter(getSupportFragmentManager());
         tab1 = new Tab1Fragment();
         tab2 = new Tab2Fragment();
-        tab3 = new Tab3Fragment();
         adapter.addFragment(tab1, "Play");
         adapter.addFragment(tab2, "Leaderboard");
-        adapter.addFragment(tab3, "Profile");
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
     }
@@ -45,13 +42,11 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         getSupportFragmentManager().putFragment(outState, "tab1", tab1);
         getSupportFragmentManager().putFragment(outState, "tab2", tab2);
-        getSupportFragmentManager().putFragment(outState, "tab3", tab3);
     }
     @Override
     public void onRestoreInstanceState(Bundle inState){
         tab1 = (Tab1Fragment) getSupportFragmentManager().getFragment(inState,"tab1");
         tab2 = (Tab2Fragment) getSupportFragmentManager().getFragment(inState,"tab2");
-        tab3 = (Tab3Fragment) getSupportFragmentManager().getFragment(inState,"tab3");
         super.onSaveInstanceState(inState);
 
     }

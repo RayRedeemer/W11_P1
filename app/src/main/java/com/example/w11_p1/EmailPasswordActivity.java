@@ -6,7 +6,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -20,7 +19,9 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -33,8 +34,12 @@ public class EmailPasswordActivity extends AppCompatActivity implements
 
     private EditText mEmailField;
     private EditText mPasswordField;
+    private EditText mFirstNameField;
+    private EditText mLastNameField;
+
     public static final String KEY = "WORKSHEET11_PART1";
     private FirebaseFirestore db;
+    private DatabaseReference mDatabase;
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
@@ -48,17 +53,25 @@ public class EmailPasswordActivity extends AppCompatActivity implements
 
         mEmailField = findViewById(R.id.fieldEmail);
         mPasswordField = findViewById(R.id.fieldPassword);
+        mFirstNameField = findViewById(R.id.fieldFirst);
+        mLastNameField = findViewById(R.id.fieldLast);
+
+        findViewById(R.id.linearLayoutBottom).setVisibility(View.GONE);
 
         // Buttons
         findViewById(R.id.emailSignInButton).setOnClickListener(this);
         findViewById(R.id.emailCreateAccountButton).setOnClickListener(this);
         findViewById(R.id.signOutButton).setOnClickListener(this);
         findViewById(R.id.verifyEmailButton).setOnClickListener(this);
+        findViewById(R.id.buttonSignIn).setOnClickListener(this);
+        findViewById(R.id.buttonSignup).setOnClickListener(this);
 
         // [START initialize_auth]
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("flash_card");
+
         // [END initialize_auth]
     }
 
@@ -88,11 +101,17 @@ public class EmailPasswordActivity extends AppCompatActivity implements
                             Log.d(TAG, "createUserWithEmail:success");
                             final FirebaseUser user = mAuth.getCurrentUser();
 
+                            // set the display name in firebase to first and last name
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(mFirstNameField.getText().toString() +" "+ mLastNameField.getText().toString()).build();
+
+                            user.updateProfile(profileUpdates);
+
                             // add user to db
                             // Create a new user with a first and last name
                             Map<String, Object> userData = new HashMap<>();
-                            userData.put("firstName", "Ada");
-                            userData.put("lastName", "Lovelace");
+                            userData.put("firstName", mFirstNameField.getText().toString());
+                            userData.put("lastName", mLastNameField.getText().toString());
                             userData.put("email", user.getEmail());
                             userData.put("userid", user.getUid());
 
@@ -112,6 +131,9 @@ public class EmailPasswordActivity extends AppCompatActivity implements
                                             Log.w(TAG, "Error adding user to db", e);
                                         }
                                     });
+
+                            // init user score to 0 in leaderboard db
+                            writeNewUser( user.getUid(), user.getDisplayName(), new Long(0));
 
                             updateUI(user);
                         } else {
@@ -169,37 +191,7 @@ public class EmailPasswordActivity extends AppCompatActivity implements
         updateUI(null);
     }
 
-    private void sendEmailVerification() {
-        // Disable button
-        findViewById(R.id.verifyEmailButton).setEnabled(false);
-
-        // Send verification email
-        // [START send_email_verification]
-        final FirebaseUser user = mAuth.getCurrentUser();
-        user.sendEmailVerification()
-                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        // [START_EXCLUDE]
-                        // Re-enable button
-                        findViewById(R.id.verifyEmailButton).setEnabled(true);
-
-                        if (task.isSuccessful()) {
-                            Toast.makeText(EmailPasswordActivity.this,
-                                    "Verification email sent to " + user.getEmail(),
-                                    Toast.LENGTH_SHORT).show();
-                        } else {
-                            Log.e(TAG, "sendEmailVerification", task.getException());
-                            Toast.makeText(EmailPasswordActivity.this,
-                                    "Failed to send verification email.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                        // [END_EXCLUDE]
-                    }
-                });
-        // [END send_email_verification]
-    }
-
+    // validate sign in / sign up data
     private boolean validateForm() {
         boolean valid = true;
 
@@ -222,6 +214,7 @@ public class EmailPasswordActivity extends AppCompatActivity implements
         return valid;
     }
 
+    // update the layout to the user
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -239,6 +232,13 @@ public class EmailPasswordActivity extends AppCompatActivity implements
         }
     }
 
+    // write user + score to leaderboard db
+    private void writeNewUser(String userId, String name, Long score) {
+        User user = new User(name, score);
+        mDatabase.child(userId).setValue(user);
+    }
+
+
     @Override
     public void onClick(View v) {
         int i = v.getId();
@@ -248,8 +248,26 @@ public class EmailPasswordActivity extends AppCompatActivity implements
             signIn(mEmailField.getText().toString(), mPasswordField.getText().toString());
         } else if (i == R.id.signOutButton) {
             signOut();
-        } else if (i == R.id.verifyEmailButton) {
-            sendEmailVerification();
+        } else if (i == R.id.buttonSignIn) {
+            startSignIn();
+        } else if (i == R.id.buttonSignup) {
+            startSignUp();
         }
+
+    }
+
+    private void startSignIn() {
+        findViewById(R.id.linearLayoutTop).setVisibility(View.GONE);
+        findViewById(R.id.linearLayoutBottom).setVisibility(View.VISIBLE);
+        findViewById(R.id.emailCreateAccountButton).setVisibility(View.GONE);
+        findViewById(R.id.fieldFirst).setVisibility(View.GONE);
+        findViewById(R.id.fieldLast).setVisibility(View.GONE);
+
+    }
+
+    private void startSignUp() {
+        findViewById(R.id.linearLayoutTop).setVisibility(View.GONE);
+        findViewById(R.id.linearLayoutBottom).setVisibility(View.VISIBLE);
+        findViewById(R.id.emailSignInButton).setVisibility(View.GONE);
     }
 }
